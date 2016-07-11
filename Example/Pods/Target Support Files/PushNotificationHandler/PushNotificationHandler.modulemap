@@ -1,0 +1,6 @@
+framework module PushNotificationHandler {
+  umbrella header "PushNotificationHandler-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -1,0 +1,16 @@
+PODS:
+  - PushNotificationHandler (0.1.0)
+
+DEPENDENCIES:
+  - PushNotificationHandler (from `../`)
+
+EXTERNAL SOURCES:
+  PushNotificationHandler:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  PushNotificationHandler: 360094ecf90f34079c2a8cce681f40e53b8e4375
+
+PODFILE CHECKSUM: 5f491efd42fde2efd6dd9fe7b65cb96e57a09296
+
+COCOAPODS: 1.0.0.beta.8

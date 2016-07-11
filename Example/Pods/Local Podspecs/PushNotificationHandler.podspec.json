@@ -1,0 +1,22 @@
+{
+  "name": "PushNotificationHandler",
+  "version": "0.1.0",
+  "summary": "A short description of PushNotificationHandler.",
+  "description": "TODO: Add long description of the pod here.",
+  "homepage": "https://github.com/<GITHUB_USERNAME>/PushNotificationHandler",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "Tsif": "gtsifrikas@gmail.com"
+  },
+  "source": {
+    "git": "https://github.com/<GITHUB_USERNAME>/PushNotificationHandler.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "8.0"
+  },
+  "source_files": "PushNotificationHandler/Classes/**/*"
+}
