@@ -1,0 +1,6 @@
+use_frameworks!
+target 'PushNotificationHandler_Tests' do
+  pod 'PushNotificationHandler', :path => '../'
+  
+  
+end
