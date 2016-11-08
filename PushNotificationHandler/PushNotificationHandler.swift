@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct WeakContainer<T where T: AnyObject> {
+struct WeakContainer<T: AnyObject> {
     weak var _value : T?
     
     init (value: T) {
@@ -24,79 +24,77 @@ public class PushNotificationHandler {
     private var subscribers: [WeakContainer<UIViewController>] = []
     private var apnsToken: String?
     
-    private var newTokenHandler: (tokenData: NSData?, token: String?, error: NSError?) -> (Void) = {_,_,_ in}
+    public typealias NewTokenHandlerArguments = (tokenData: Data?, token: String?, error: Error?)
+    private var newTokenHandler: (NewTokenHandlerArguments) -> Void = {_,_,_ in}
     
     private func alreadySubscribedIndex(potentialSubscriber: PushNotificationSubscriber) -> Int? {
-        return subscribers.indexOf({ (weakSubscriber) -> Bool in
-            if let validPotentialSubscriber = potentialSubscriber as? UIViewController, let validWeakSubscriber = weakSubscriber.get() {
-                return unsafeAddressOf(validPotentialSubscriber).distanceTo(unsafeAddressOf(validWeakSubscriber)) == 0
+        return subscribers.index(where: { (weakSubscriber) -> Bool in
+            guard let validPotentialSubscriber = potentialSubscriber as? UIViewController,
+                let validWeakSubscriber = weakSubscriber.get() else {
+                    return false
             }
-            return false
+            
+            return validPotentialSubscriber === validWeakSubscriber
         })
     }
     
-    public func registerNewAPNSTokenHandler(handler: (tokenData: NSData?, token: String?, error: NSError?)->(Void)) {
+    public func registerNewAPNSTokenHandler(handler: @escaping (NewTokenHandlerArguments) -> Void) {
         newTokenHandler = handler
     }
     
-    public func subscribeForPushNotifications<T where T: PushNotificationSubscriber>(subscriber: T)  {
+    public func subscribeForPushNotifications<T: PushNotificationSubscriber>(subscriber: T)  {
         if let validSubscriber = subscriber as? UIViewController {
-            if alreadySubscribedIndex(subscriber) == nil {
+            if alreadySubscribedIndex(potentialSubscriber: subscriber) == nil {
                 subscribers += [WeakContainer(value: validSubscriber)]
             }
         }
     }
     
-    public func unsubscribeForPushNotifications<T where T: PushNotificationSubscriber>(subscriber: T)  {
-        if let index = alreadySubscribedIndex(subscriber) {
-            subscribers.removeAtIndex(index)
+    public func unsubscribeForPushNotifications<T: PushNotificationSubscriber>(subscriber: T)  {
+        if let index = alreadySubscribedIndex(potentialSubscriber: subscriber) {
+            subscribers.remove(at: index)
         }
     }
     
     public func registerForPushNotifications(application: UIApplication) {
-        let notificationSettings = UIUserNotificationSettings(
-            forTypes: [.Badge, .Sound, .Alert], categories: nil)
+        let notificationSettings = UIUserNotificationSettings(types: [.badge, .sound, .alert], categories: nil)
         application.registerUserNotificationSettings(notificationSettings)
     }
     
-    public func application(application: UIApplication, didRegisterUserNotificationSettings notificationSettings: UIUserNotificationSettings) {
-        if notificationSettings.types != .None {
+    public func application(_ application: UIApplication, didRegisterUserNotificationSettings notificationSettings: UIUserNotificationSettings) {
+        if notificationSettings.types != .none {
             application.registerForRemoteNotifications()
         }
     }
     
-    public func application(application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: NSData) {
-        let tokenChars = UnsafePointer<CChar>(deviceToken.bytes)
-        var tokenString = ""
+    public func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         
-        for i in 0..<deviceToken.length {
-            tokenString += String(format: "%02.2hhx", arguments: [tokenChars[i]])
-        }
+        let tokenString = deviceToken.map { String(format: "%02.2hhx", arguments: [$0]) }.joined()
         
         apnsToken = tokenString
-        newTokenHandler(tokenData: deviceToken, token: tokenString, error: nil)
+        newTokenHandler((tokenData: deviceToken, token: tokenString, error: nil))
     }
     
-    public func application(application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: NSError) {
-        newTokenHandler(tokenData: nil, token: nil, error: error)
+    public func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        newTokenHandler((tokenData: nil, token: nil, error: error))
         print("Failed to register:", error)
     }
     
-    public func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject]) {
-        let aps = userInfo["aps"] as! [String: AnyObject]
-        handleAPNS(aps)
+    public func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any]) {
+        let aps = userInfo["aps"]
+        handleAPNS(aps: aps as! [AnyHashable : Any])
     }
     
-    private func handleAPNS(aps: [String : AnyObject]) {
+    private func handleAPNS(aps: [AnyHashable : Any]) {
         for containerOfSubscriber in subscribers {
-            (containerOfSubscriber.get() as? PushNotificationSubscriber)?.newPushNotificationReceived(aps)
+            (containerOfSubscriber.get() as? PushNotificationSubscriber)?.newPushNotificationReceived(aps: aps)
         }
     }
     
-    public func handleApplicationStartWith(application: UIApplication, launchOptions: [NSObject: AnyObject]?) {
-        if let notification = launchOptions?[UIApplicationLaunchOptionsRemoteNotificationKey] as? [String: AnyObject] {
+    public func handleApplicationStartWith(application: UIApplication, launchOptions: [UIApplicationLaunchOptionsKey : Any]?) {
+        if let notification = launchOptions?[.remoteNotification] as? [String: AnyObject] {
             if let aps = notification["aps"] as? [String: AnyObject] {
-                handleAPNS(aps)
+                handleAPNS(aps: aps)
             }
         }
         
@@ -104,5 +102,5 @@ public class PushNotificationHandler {
 }
 
 public protocol PushNotificationSubscriber {
-    func newPushNotificationReceived(aps: [String: AnyObject])
+    func newPushNotificationReceived(aps: [AnyHashable : Any])
 }
