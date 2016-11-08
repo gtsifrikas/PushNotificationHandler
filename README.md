@@ -35,15 +35,15 @@ import PushNotificationHandler
 ```
 
 ```swift
-func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
-    PushNotificationHandler.sharedInstance.registerForPushNotifications(application)
-    PushNotificationHandler.sharedInstance.handleApplicationStartWith(application, launchOptions: launchOptions)
-
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
+    PushNotificationHandler.sharedInstance.registerForPushNotifications(application: application)
+    PushNotificationHandler.sharedInstance.handleApplicationStartWith(application: application, launchOptions: launchOptions)
+        
     PushNotificationHandler.sharedInstance.registerNewAPNSTokenHandler { (tokenData, token, error) -> (Void) in
         if let validToken = token {
             print("Device Token:", validToken)
         } else {
-            print("Device token error: " + (error?.description ?? "Strange things are happening"))
+            print("Device token error: " + (error?.localizedDescription ?? "Strange things are happening"))
         }
     }
 }
@@ -53,22 +53,23 @@ func application(application: UIApplication, didFinishLaunchingWithOptions launc
 Also implement the methods as following
 
 ```swift 
-func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject]) {
+func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any]) {
     PushNotificationHandler.sharedInstance.application(application, didReceiveRemoteNotification: userInfo)
 }
 ```
 ```swift 
-func application(application: UIApplication, didRegisterUserNotificationSettings notificationSettings: UIUserNotificationSettings) {
-    PushNotificationHandler.sharedInstance.application(application, didRegisterUserNotificationSettings: notificationSettings)
+func application(_ application: UIApplication, didRegister notificationSettings: UIUserNotificationSettings) {
+    PushNotificationHandler.sharedInstance.application(application, didRegister: notificationSettings)
 }
+
 ```
 ```swift 
-func application(application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: NSData) {
+func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
     PushNotificationHandler.sharedInstance.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
 }
 ```
 ```swift 
-func application(application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: NSError) {
+func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
     PushNotificationHandler.sharedInstance.application(application, didFailToRegisterForRemoteNotificationsWithError: error)
 }
 ```
@@ -85,19 +86,19 @@ Your controller must implement `PushNotificationSubscriber` protocol
 ```swift
 override func viewDidLoad() {
     super.viewDidLoad()
-    PushNotificationHandler.sharedInstance.subscribeForPushNotifications(self)
+    PushNotificationHandler.sharedInstance.subscribeForPushNotifications(subscriber: self)
 }
 ```
 
 ```swift
 deinit {
-    PushNotificationHandler.sharedInstance.unsubscribeForPushNotifications(self)
+    PushNotificationHandler.sharedInstance.unsubscribeForPushNotifications(subscriber: self)
 }
 ```
 
 ```swift
-func newPushNotificationReceived(aps: [String : AnyObject]) {
-//do something with the push notification
+func newPushNotificationReceived(aps: [AnyHashable : Any]) {
+    // Do something with the push notification
 }
 ```
 
