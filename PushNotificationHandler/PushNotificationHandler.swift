@@ -61,7 +61,7 @@ public class PushNotificationHandler {
         application.registerUserNotificationSettings(notificationSettings)
     }
     
-    public func application(_ application: UIApplication, didRegisterUserNotificationSettings notificationSettings: UIUserNotificationSettings) {
+    public func application(_ application: UIApplication, didRegister notificationSettings: UIUserNotificationSettings) {
         if notificationSettings.types != .none {
             application.registerForRemoteNotifications()
         }
